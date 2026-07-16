@@ -11,7 +11,7 @@
 
 ## STEP 3
 
-- joined=`收到：退货（mock 流）` done=`{'type': 'done', 'tenant_id': 'tenant-a', 'user_id': 'u-alice', 'model_id': 'default', 'request_id': 'req-880e6675750b'}`
+- joined=`收到：退货（mock 流）` done=`{'type': 'done', 'tenant_id': 'tenant-a', 'user_id': 'u-alice', 'model_id': 'default', 'request_id': 'req-2615a8160b8c'}`
 
 ## STEP 4
 

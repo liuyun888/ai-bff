@@ -43,7 +43,7 @@ git push -u github main
 
 | 配置 | 含义 | 默认示例 |
 |------|------|----------|
-| `AI_SERVICE_BASE_URL` | 下游 AI 引擎根地址 | `http://127.0.0.1:8001` |
+| `AI_SERVICE_BASE_URL` | 下游 AI 引擎根地址 | `http://127.0.0.1:8091` |
 | `BFF_PORT` | BFF 监听端口 | `8088` |
 | `INTERNAL_TOKEN` | 与 ai-service 共享的内部密钥 | `dev-internal-token` |
 | `AI_STREAM_READ_TIMEOUT` | SSE 读空闲超时（秒） | `120.0` |
@@ -74,4 +74,4 @@ cd ai-bff
 .venv/bin/python scripts/10_05_frontend_sse_demo.py
 ```
 
-联调：先起 `ai-service`（端口 8001），再 `uvicorn app.main:app --port 8088`。
+联调：先起 `ai-service`（端口 **8091**），确认 `AI_SERVICE_BASE_URL=http://127.0.0.1:8091`，再 `uvicorn app.main:app --port 8088`。

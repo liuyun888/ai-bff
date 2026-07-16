@@ -18,9 +18,9 @@ _ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(_ROOT / ".env")
 
 # 可调：下游 AI 引擎根 URL（不要带尾斜杠）
-# 注意：本专栏 ai-service 默认端口常为 8001（见 APP_PORT）
+# 注意：须与 ai-service 的 APP_PORT 一致（本机 .env 常用 8091）
 AI_SERVICE_BASE_URL = os.getenv(
-    "AI_SERVICE_BASE_URL", "http://127.0.0.1:8001"
+    "AI_SERVICE_BASE_URL", "http://127.0.0.1:8091"
 ).rstrip("/")
 
 # 可调：BFF 端口；与 ai-service 错开

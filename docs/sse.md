@@ -40,10 +40,10 @@ data: {"type":"error","message":"..."}
 本仓库已挂静态页（与 API **同源**，免 CORS 折腾）：
 
 ```bash
-# 终端 A
-cd ../ai-service && .venv/bin/uvicorn app.main:app --port 8001
-# 终端 B
-cd ../ai-bff && .venv/bin/uvicorn app.main:app --port 8088
+# 终端 A：ai-service（本机 APP_PORT=8091）
+cd ../ai-service && .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8091
+# 终端 B：ai-bff（.env 中 AI_SERVICE_BASE_URL=http://127.0.0.1:8091）
+cd ../ai-bff && .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8088
 # 浏览器
 open http://127.0.0.1:8088/chat
 ```

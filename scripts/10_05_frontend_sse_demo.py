@@ -69,10 +69,12 @@ def main() -> None:
     note.append("- 模拟 Abort：提前 close stream\n")
 
     print("\n" + "=" * 52, "STEP 5 · 浏览器打开")
-    print("  # 起 ai-service:8001 + ai-bff:8088 后访问：")
+    print("  # 起 ai-service:8091 + ai-bff:8088 后访问：")
+    print("  #   cd ../ai-service && .venv/bin/uvicorn app.main:app --port 8091")
+    print("  #   cd ../ai-bff && .venv/bin/uvicorn app.main:app --port 8088")
     print("  open http://127.0.0.1:8088/chat")
     note.append("## STEP 5\n")
-    note.append("- 浏览器：`http://127.0.0.1:8088/chat`\n")
+    note.append("- ai-service:`8091` + BFF:`8088` → 浏览器：`http://127.0.0.1:8088/chat`\n")
 
     assert suite["ok"]
     NOTE_PATH.parent.mkdir(parents=True, exist_ok=True)
