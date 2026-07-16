@@ -36,7 +36,7 @@ git push -u github main
 ## 上下游
 
 ```text
-前端(/chat)  →  ai-bff  →  ai-service
+前端(/chat 或 /assistant)  →  ai-bff  →  ai-service
                   ↑
              本仓库（可配置 AI_SERVICE_BASE_URL）
 ```
@@ -50,11 +50,16 @@ git push -u github main
 
 本地配置：复制 `.env.example` 为 `.env`（`.env` 已进 `.gitignore`，勿提交密钥）。
 
-## 前端消费 SSE（10.05）
+## 前端消费 SSE
 
-- 演示页：起服务后打开 `http://127.0.0.1:8088/chat`
+| 课次 | 页面 | API | 说明 |
+|------|------|-----|------|
+| 10.05 | `http://127.0.0.1:8088/chat` | `/api/chat/stream` | mock 教学页（`static/chat/`，勿覆盖） |
+| 11.05 | `http://127.0.0.1:8088/assistant` | `/api/assistant/stream` | 统一助手（`static/assistant/`） |
+
 - 对接说明：[`docs/sse.md`](docs/sse.md)
-- 验收：`python scripts/10_05_frontend_sse_demo.py`
+- 验收 10.05：`python scripts/10_05_frontend_sse_demo.py`
+- 验收 11.05：`python scripts/11_05_chat_page_wire_demo.py`
 
 ## 与 MCP 的关系
 

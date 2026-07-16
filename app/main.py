@@ -1,11 +1,12 @@
 # app/main.py
-"""课次 10.01～10.05 · ai-bff 入口。
+"""课次 10.01～10.05、11.05 · ai-bff 入口。
 
 10.01：BFF 自身可启动。
 10.02：/health 聚合探测下游。
-10.03：/api/chat/stream 转发 SSE（边读边写）。
+10.03：/api/chat/stream 转发 mock SSE（边读边写）。
 10.04：入站验用户 Bearer；出站盖内部头（租户/模型/内部令牌）。
 10.05：静态聊天页 /chat + CORS（异源联调备用）。
+11.05：/api/assistant/stream → 统一助手；/chat 页走真能力。
 """
 
 from __future__ import annotations
@@ -21,7 +22,7 @@ from pydantic import BaseModel, Field
 
 from app.auth import authenticate_request, build_downstream_headers
 from app.clients.ai_http import check_ai_health
-from app.clients.ai_stream import iter_upstream_sse
+from app.clients.ai_stream import ASSISTANT_STREAM_PATH, iter_upstream_sse
 from app.config import AI_SERVICE_BASE_URL, APP_NAME, BFF_PORT
 
 # 静态资源目录：ai-bff/static/
@@ -45,6 +46,8 @@ class ChatStreamIn(BaseModel):
     message: str = Field(default="", description="用户输入")
     # 前端可建议模型；BFF 按租户白名单裁剪
     model_id: str = Field(default="default", alias="modelId", description="偏好模型")
+    # 11.05：多轮会话键；空则下游用 user_id 兜底
+    session_id: str = Field(default="", alias="sessionId", description="会话 id")
 
     model_config = {"populate_by_name": True}
 
@@ -100,10 +103,49 @@ async def chat_stream(body: ChatStreamIn, request: Request) -> StreamingResponse
     )
 
 
+@app.post("/api/assistant/stream")
+async def assistant_stream(body: ChatStreamIn, request: Request) -> StreamingResponse:
+    """11.05：鉴权 → 内部头 → 转发统一助手 SSE（非 mock）。"""
+    principal = authenticate_request(request)
+    forged = request.query_params.get("tenantId")
+    headers = build_downstream_headers(
+        principal,
+        model_id=body.model_id,
+        ignore_query_tenant=forged,
+    )
+
+    async def gen() -> Any:
+        async for chunk in iter_upstream_sse(
+            body.message,
+            request=request,
+            downstream_headers=headers,
+            path=ASSISTANT_STREAM_PATH,
+            session_id=body.session_id,
+        ):
+            yield chunk
+
+    return StreamingResponse(
+        gen(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "X-Resolved-Tenant": principal.tenant_id,
+            "X-Assistant-Path": ASSISTANT_STREAM_PATH,
+        },
+    )
+
+
 @app.get("/chat")
 def chat_page() -> FileResponse:
-    """10.05 演示页：浏览器打开后用 fetch 消费同源 SSE。"""
+    """10.05 演示页：mock SSE（勿改成助手流，否则正文无法复现）。"""
     return FileResponse(_STATIC_DIR / "chat" / "index.html")
+
+
+@app.get("/assistant")
+def assistant_page() -> FileResponse:
+    """11.05 统一助手页：接 /api/assistant/stream（与 /chat 分立）。"""
+    return FileResponse(_STATIC_DIR / "assistant" / "index.html")
 
 
 @app.get("/meta/layers")

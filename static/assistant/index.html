@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ai-bff · AI 助手（11.05）</title>
+    <link rel="stylesheet" href="/static/assistant/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>AI 助手（统一编排）</h1>
+      <p class="lead">
+        课次 11.05：经 BFF <code>/api/assistant/stream</code> 接到业务助手 / 客服 /
+        退货工单 / 知识库护栏。10.05 的 mock 演示页仍在
+        <a href="/chat">/chat</a>，本页不覆盖历史课。
+      </p>
+
+      <section class="panel">
+        <div class="row">
+          <div>
+            <label for="token">Bearer Token（演示）</label>
+            <input id="token" value="tok-alice" autocomplete="off" />
+          </div>
+          <div>
+            <label for="modelId">modelId</label>
+            <select id="modelId">
+              <option value="default" selected>default</option>
+              <option value="fast">fast（仅 tenant-a）</option>
+            </select>
+          </div>
+        </div>
+        <label for="message">消息（试试：防水款还有吗？退货多久？ / 投诉转人工 / 申请退货工单：外包装破损要求全额退款）</label>
+        <textarea id="message">防水款还有吗？退货多久？</textarea>
+        <div class="actions">
+          <button type="button" id="btnSend">发送</button>
+          <button type="button" id="btnStop" class="secondary" disabled>停止</button>
+        </div>
+        <p id="status" data-kind="idle">idle</p>
+      </section>
+
+      <section class="panel">
+        <label>助手回复（流式）</label>
+        <div id="reply" class="reply-box" aria-live="polite"></div>
+        <div id="meta"></div>
+      </section>
+
+      <p class="hint">
+        本页：<code>/assistant</code> → <code>/api/assistant/stream</code>。
+        对照 mock：<a href="/chat">/chat</a>。Token 见 <code>docs/sse.md</code>。
+      </p>
+    </main>
+    <script src="/static/assistant/app.js"></script>
+  </body>
+</html>

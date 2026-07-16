@@ -1,17 +1,33 @@
 # docs/sse.md
-# 前端对接 SSE（课次 10.05）
+# 前端对接 SSE（课次 10.05 / 11.05）
 
 面向 Web / App / 小程序任选一端落地。事件约定与鉴权与 `ai-bff` 现网一致。
 
-## 接口
+## 两页对照（勿互相覆盖）
+
+| 页面 | 课次 | API | 下游 | 说明 |
+|------|------|-----|------|------|
+| `GET /chat` · `static/chat/` | 10.05 | `POST /api/chat/stream` | `/v1/chat/stream` | mock「收到…」教学页，**按正文复现请用此页** |
+| `GET /assistant` · `static/assistant/` | 11.05 | `POST /api/assistant/stream` | `/v1/assistant/stream` | 统一助手（库存/客服/工单/知识库） |
+
+## 接口明细
+
+### 正式助手（11.05）
 
 | 项 | 值 |
 |----|-----|
-| URL | `POST /api/chat/stream` |
+| URL | `POST /api/assistant/stream` |
 | Content-Type | `application/json` |
 | Authorization | `Bearer <token>`（必填） |
 | Body | `{"message":"...","modelId":"default"}` |
 | 响应 | `text/event-stream` |
+
+### 教学 mock（10.05）
+
+| 项 | 值 |
+|----|-----|
+| URL | `POST /api/chat/stream` |
+| 下游 | 「收到…（mock 流）」 |
 
 演示 Token：
 
@@ -33,22 +49,20 @@ data: {"type":"error","message":"..."}
 ```
 
 - 按 `\n\n` 拆事件；chunk 可能劈开一行 → **必须自建 buffer**
-- 优先 **fetch + ReadableStream**（可带头、可 POST）；不要用 EventSource 硬扛 Token
+- 优先 **fetch + ReadableStream**；不要用 EventSource 硬扛 Token
+- 11.05 的 `done` 还可含 `mode` / `action` / `guard_triggered` / `case_id`
 
-## Web 示例页
-
-本仓库已挂静态页（与 API **同源**，免 CORS 折腾）：
+## 本地打开
 
 ```bash
-# 终端 A：ai-service（本机 APP_PORT=8091）
+# 终端 A：ai-service
 cd ../ai-service && .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8091
-# 终端 B：ai-bff（.env 中 AI_SERVICE_BASE_URL=http://127.0.0.1:8091）
+# 终端 B：ai-bff
 cd ../ai-bff && .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8088
-# 浏览器
-open http://127.0.0.1:8088/chat
-```
 
-源码：`static/chat/`（`app.js` 含 AbortController）。
+open http://127.0.0.1:8088/chat        # 10.05 mock
+open http://127.0.0.1:8088/assistant   # 11.05 真助手
+```
 
 ## 停止生成
 
@@ -58,15 +72,7 @@ open http://127.0.0.1:8088/chat
 
 | 端 | 建议 |
 |----|------|
-| 微信小程序 | 若无法真流式，对接说明里写「降级一次返回」；有分片回调则按同样事件解析 |
-| iOS | URLSession 流式读 body |
-| Android | OkHttp 流式读 |
+| 小程序 | 用支持流式的 request；自建 SSE buffer |
+| App | OkHttp / URLSession 读 chunk；事件解析与 Web 一致 |
 
-原则：**事件 JSON 约定不变**；变的是传输层是否支持边读边画。
-
-## 验收脚本
-
-```bash
-cd ai-bff
-.venv/bin/python scripts/10_05_frontend_sse_demo.py
-```
+鉴权透传见 10.04；统一编排见 11.05。

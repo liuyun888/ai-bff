@@ -22,7 +22,10 @@ from app.config import (
     INTERNAL_TOKEN,
 )
 
+# 10.03 教学 mock 流（验收「收到…mock」）
 CHAT_STREAM_PATH = "/v1/chat/stream"
+# 11.05 统一助手真流（/chat 页正式入口）
+ASSISTANT_STREAM_PATH = "/v1/assistant/stream"
 
 
 def stream_timeout() -> httpx.Timeout:
@@ -52,6 +55,8 @@ async def iter_upstream_sse(
     request: Request | None = None,
     base_url: str | None = None,
     downstream_headers: dict[str, str] | None = None,
+    path: str | None = None,
+    session_id: str = "",
 ) -> AsyncIterator[bytes]:
     """向下游开 SSE，边收边 yield 原始字节。
 
@@ -60,16 +65,21 @@ async def iter_upstream_sse(
         request: 上游（浏览器）请求；断开则停止转发
         base_url: 可覆盖配置，便于演示注入临时端口
         downstream_headers: 10.04 内部头（租户/用户/模型/request_id）
+        path: 下游路径；默认 CHAT_STREAM_PATH（mock）；助手用 ASSISTANT_STREAM_PATH
+        session_id: 11.05 会话 id（仅助手流有用）
     """
     root = (base_url or AI_SERVICE_BASE_URL).rstrip("/")
-    url = f"{root}{CHAT_STREAM_PATH}"
+    url = f"{root}{(path or CHAT_STREAM_PATH)}"
     cancelled = False
     headers = _merge_headers(downstream_headers)
+    body: dict[str, Any] = {"message": message}
+    if session_id:
+        body["session_id"] = session_id
     async with httpx.AsyncClient(timeout=stream_timeout()) as client:
         async with client.stream(
             "POST",
             url,
-            json={"message": message},
+            json=body,
             headers=headers,
         ) as resp:
             resp.raise_for_status()
