@@ -10,7 +10,7 @@
 
 ## STEP 2 · 流式转发
 
-- base: `http://127.0.0.1:61797`
+- base: `http://127.0.0.1:64583`
 - joined: `收到：退货要几天（mock 流）`
 - arrivals: 17
 

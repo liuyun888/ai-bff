@@ -17,8 +17,19 @@ from app.clients.ai_stream import (
     iter_upstream_sse,
     parse_sse_events,
 )
+from app.config import INTERNAL_TOKEN
 
 AI_SERVICE_ROOT = Path(__file__).resolve().parents[3] / "ai-service"
+
+# 10.04 起下游要内部头；本课只验流式，用固定演示上下文
+_DEMO_DOWNSTREAM_HEADERS = {
+    "Accept": "text/event-stream",
+    "X-Internal-Token": INTERNAL_TOKEN,
+    "X-Tenant-Id": "demo",
+    "X-User-Id": "demo-user",
+    "X-Model-Id": "default",
+    "X-Request-Id": "req-m10-03-fwd",
+}
 
 
 def _pick_free_port() -> int:
@@ -33,9 +44,13 @@ def _pick_free_port() -> int:
 
 def _start_ai_service_ephemeral() -> tuple[subprocess.Popen[Any], str]:
     """子进程拉起真实 ai-service（含 /v1/chat/stream），避免污染本进程的 app 包。"""
+    import os
+
     port = _pick_free_port()
     base = f"http://127.0.0.1:{port}"
     python = sys.executable
+    env = os.environ.copy()
+    env["INTERNAL_TOKEN"] = INTERNAL_TOKEN
     proc = subprocess.Popen(
         [
             python,
@@ -52,6 +67,7 @@ def _start_ai_service_ephemeral() -> tuple[subprocess.Popen[Any], str]:
         cwd=str(AI_SERVICE_ROOT),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.PIPE,
+        env=env,
     )
     # 等 /health
     last_err = ""
@@ -96,10 +112,18 @@ def demo_forward_vs_buffer(message: str = "退货要几天") -> dict[str, Any]:
 
         async def run() -> dict[str, Any]:
             streamed_raw, stream_stamps = await _collect_stream(
-                iter_upstream_sse(message, base_url=base)
+                iter_upstream_sse(
+                    message,
+                    base_url=base,
+                    downstream_headers=_DEMO_DOWNSTREAM_HEADERS,
+                )
             )
             buffered_raw, buffer_stamps = await _collect_stream(
-                buffer_all_then_yield(message, base_url=base)
+                buffer_all_then_yield(
+                    message,
+                    base_url=base,
+                    downstream_headers=_DEMO_DOWNSTREAM_HEADERS,
+                )
             )
             return {
                 "streamed_raw": streamed_raw,
