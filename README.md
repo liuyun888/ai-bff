@@ -15,15 +15,16 @@
 cd ai-bff
 git remote add origin git@gitee.com:liuyunkai666/ai-bff.git
 git remote add github git@github.com:liuyun888/ai-bff.git
-git push -u origin master   # 或 main，以你默认分支为准
-git push -u github master
+git push -u origin main
+git push -u github main
 ```
 
 ## 职责（本层该做）
 
 - 鉴权、限流、参数校验
 - 转发 / 聚合到 `ai-service`
-- SSE 透传（见 10.03）
+- SSE 透传（10.03）与鉴权上下文下沉（10.04）
+- 前端演示页与对接说明（10.05）
 - 统一打点、追踪 id
 
 ## 不职责（别塞进来）
@@ -35,19 +36,25 @@ git push -u github master
 ## 上下游
 
 ```text
-前端  →  ai-bff  →  ai-service
-         ↑
-    本仓库（可配置 AI_SERVICE_BASE_URL）
+前端(/chat)  →  ai-bff  →  ai-service
+                  ↑
+             本仓库（可配置 AI_SERVICE_BASE_URL）
 ```
 
 | 配置 | 含义 | 默认示例 |
 |------|------|----------|
 | `AI_SERVICE_BASE_URL` | 下游 AI 引擎根地址 | `http://127.0.0.1:8001` |
 | `BFF_PORT` | BFF 监听端口 | `8088` |
-| `AI_CONNECT_TIMEOUT` / `AI_READ_TIMEOUT` | 下游连接/读超时（秒） | `2.0` / `3.0` |
-| `AI_HEALTH_MAX_RETRIES` | health 最大尝试次数（幂等） | `2` |
+| `INTERNAL_TOKEN` | 与 ai-service 共享的内部密钥 | `dev-internal-token` |
+| `AI_STREAM_READ_TIMEOUT` | SSE 读空闲超时（秒） | `120.0` |
 
 本地配置：复制 `.env.example` 为 `.env`（`.env` 已进 `.gitignore`，勿提交密钥）。
+
+## 前端消费 SSE（10.05）
+
+- 演示页：起服务后打开 `http://127.0.0.1:8088/chat`
+- 对接说明：[`docs/sse.md`](docs/sse.md)
+- 验收：`python scripts/10_05_frontend_sse_demo.py`
 
 ## 与 MCP 的关系
 
@@ -56,16 +63,15 @@ git push -u github master
 
 二者不互相替代。
 
-## 本课验收
+## 本模块验收脚本
 
 ```bash
 cd ai-bff
-# 10.01 边界与骨架
-python scripts/10_01_bff_pattern_demo.py
-# 10.02 下游 HTTP 探活（通/不通/超时）
-python scripts/10_02_http_client_demo.py
+.venv/bin/python scripts/10_01_bff_pattern_demo.py
+.venv/bin/python scripts/10_02_http_client_demo.py
+.venv/bin/python scripts/10_03_sse_forward_demo.py
+.venv/bin/python scripts/10_04_auth_passthrough_demo.py
+.venv/bin/python scripts/10_05_frontend_sse_demo.py
 ```
 
-可选联调：先起 `ai-service`（端口 8001），再 `uvicorn app.main:app --port 8088`，访问 `/health` 看 `ai=up`。
-
-下一课（10.03）：SSE 流式转发。
+联调：先起 `ai-service`（端口 8001），再 `uvicorn app.main:app --port 8088`。

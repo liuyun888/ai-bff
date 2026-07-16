@@ -1,0 +1,169 @@
+/* 课次 10.05 · 演示聊天页样式（教学用，保持清爽） */
+:root {
+  --bg: #f7f5f1;
+  --ink: #1a1a1a;
+  --muted: #5c5c5c;
+  --line: #d8d2c8;
+  --accent: #c45c26;
+  --ok: #2f6b4f;
+  --err: #a33;
+  --panel: #fffdf9;
+  --mono: "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
+  --sans: "Source Han Sans SC", "Noto Sans SC", "PingFang SC", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--sans);
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse 80% 50% at 10% 0%, #efe8dc 0%, transparent 55%),
+    var(--bg);
+}
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+
+h1 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0 0 0.35rem;
+}
+
+.lead {
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0 0 1.5rem;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+}
+
+label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: #fff;
+  margin-bottom: 0.85rem;
+}
+
+textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (max-width: 560px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 0.55rem 1rem;
+  border-radius: 3px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: #fff;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--ink);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+#status {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  margin: 0.75rem 0 0;
+}
+
+#status[data-kind="streaming"] {
+  color: var(--accent);
+}
+#status[data-kind="done"] {
+  color: var(--ok);
+}
+#status[data-kind="error"],
+#status[data-kind="aborted"] {
+  color: var(--err);
+}
+
+.reply-box {
+  min-height: 7rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  font-family: var(--mono);
+}
+
+#meta {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.hint code {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  background: #efe8dc;
+  padding: 0.1rem 0.3rem;
+  border-radius: 2px;
+}

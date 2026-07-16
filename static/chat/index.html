@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ai-bff · SSE 聊天演示</title>
+    <link rel="stylesheet" href="/static/chat/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>ai-bff SSE 聊天</h1>
+      <p class="lead">
+        课次 10.05：用 <code>fetch</code> 读流（可带 Authorization），UI 逐字追加；点「停止」走
+        <code>AbortController</code>。
+      </p>
+
+      <section class="panel">
+        <div class="row">
+          <div>
+            <label for="token">Bearer Token（演示）</label>
+            <input id="token" value="tok-alice" autocomplete="off" />
+          </div>
+          <div>
+            <label for="modelId">modelId</label>
+            <select id="modelId">
+              <option value="default" selected>default</option>
+              <option value="fast">fast（仅 tenant-a）</option>
+            </select>
+          </div>
+        </div>
+        <label for="message">消息</label>
+        <textarea id="message">退货要几天</textarea>
+        <div class="actions">
+          <button type="button" id="btnSend">发送</button>
+          <button type="button" id="btnStop" class="secondary" disabled>停止</button>
+        </div>
+        <p id="status" data-kind="idle">idle</p>
+      </section>
+
+      <section class="panel">
+        <label>助手回复（流式）</label>
+        <div id="reply" class="reply-box" aria-live="polite"></div>
+        <div id="meta"></div>
+      </section>
+
+      <p class="hint">
+        同源打开本页：<code>/chat</code>。账号见
+        <code>docs/sse.md</code>。Network 里应看到
+        <code>text/event-stream</code>。
+      </p>
+    </main>
+    <script src="/static/chat/app.js"></script>
+  </body>
+</html>

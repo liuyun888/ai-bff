@@ -1,18 +1,22 @@
 # app/main.py
-"""课次 10.01～10.04 · ai-bff 入口。
+"""课次 10.01～10.05 · ai-bff 入口。
 
 10.01：BFF 自身可启动。
 10.02：/health 聚合探测下游。
 10.03：/api/chat/stream 转发 SSE（边读边写）。
 10.04：入站验用户 Bearer；出站盖内部头（租户/模型/内部令牌）。
+10.05：静态聊天页 /chat + CORS（异源联调备用）。
 """
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Request
-from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from app.auth import authenticate_request, build_downstream_headers
@@ -20,7 +24,19 @@ from app.clients.ai_http import check_ai_health
 from app.clients.ai_stream import iter_upstream_sse
 from app.config import AI_SERVICE_BASE_URL, APP_NAME, BFF_PORT
 
+# 静态资源目录：ai-bff/static/
+_STATIC_DIR = Path(__file__).resolve().parents[1] / "static"
+
 app = FastAPI(title=APP_NAME, description="BFF：鉴权与转发，不做 RAG/Agent")
+
+# 演示：允许异源前端联调；同源 /chat 页不依赖 CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class ChatStreamIn(BaseModel):
@@ -84,6 +100,12 @@ async def chat_stream(body: ChatStreamIn, request: Request) -> StreamingResponse
     )
 
 
+@app.get("/chat")
+def chat_page() -> FileResponse:
+    """10.05 演示页：浏览器打开后用 fetch 消费同源 SSE。"""
+    return FileResponse(_STATIC_DIR / "chat" / "index.html")
+
+
 @app.get("/meta/layers")
 def meta_layers() -> dict[str, object]:
     """给前端/运维看的边界说明（演示用，生产可关掉）。"""
@@ -94,6 +116,11 @@ def meta_layers() -> dict[str, object]:
         "why_separate": why_separate(),
         "mcp_vs_bff": mcp_vs_bff(),
     }
+
+
+# 必须在具体路由之后挂载，避免抢掉 /api 等前缀
+if _STATIC_DIR.is_dir():
+    app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
 
 def run() -> None:
