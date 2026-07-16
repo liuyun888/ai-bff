@@ -1,28 +1,36 @@
 # app/main.py
-"""课次 10.01～10.02 · ai-bff 入口。
+"""课次 10.01～10.03 · ai-bff 入口。
 
 10.01：BFF 自身可启动。
-10.02：/health 聚合探测下游 ai-service（超时/降级，不抛裸堆栈）。
+10.02：/health 聚合探测下游。
+10.03：/api/chat/stream 转发 SSE（边读边写）。
 """
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+from typing import Any
+
+from fastapi import FastAPI, Request
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
 
 from app.clients.ai_http import check_ai_health
+from app.clients.ai_stream import iter_upstream_sse
 from app.config import AI_SERVICE_BASE_URL, APP_NAME, BFF_PORT
 
 app = FastAPI(title=APP_NAME, description="BFF：鉴权与转发，不做 RAG/Agent")
 
 
+class ChatStreamIn(BaseModel):
+    """前端 → BFF 的流式聊天入参。"""
+
+    message: str = Field(default="", description="用户输入")
+
+
 @app.get("/health")
 def health() -> dict[str, object]:
-    """BFF 探活：自身 ok + 下游 ai 汇总。
-
-    下游挂了也不返回 500 空白，而是 ai=down/timeout + 稳定 code。
-    """
+    """BFF 探活：自身 ok + 下游 ai 汇总。"""
     ai = check_ai_health()
-    # BFF 进程活着 → status 仍 ok；用 ai 字段表达下游
     overall = "ok" if ai.get("ai") == "up" else "degraded"
     return {
         "status": overall,
@@ -34,6 +42,27 @@ def health() -> dict[str, object]:
         "detail": ai.get("detail"),
         "error": ai.get("error"),
     }
+
+
+@app.post("/api/chat/stream")
+async def chat_stream(body: ChatStreamIn, request: Request) -> StreamingResponse:
+    """把 ai-service 的 SSE 边读边写转给前端。
+
+    客户端断开时，iter_upstream_sse 会停止读取并关闭下游连接。
+    """
+
+    async def gen() -> Any:
+        async for chunk in iter_upstream_sse(body.message, request=request):
+            yield chunk
+
+    return StreamingResponse(
+        gen(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.get("/meta/layers")

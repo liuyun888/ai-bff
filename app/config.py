@@ -1,8 +1,9 @@
 # app/config.py
-"""课次 10.01～10.02 · BFF 可调配置。
+"""课次 10.01～10.03 · BFF 可调配置。
 
 改 AI_SERVICE_BASE_URL → 指向另一套 ai-service；
-改超时/重试 → 影响下游探活手感（越小越容易 timeout）。
+改超时/重试 → 影响下游探活手感（越小越容易 timeout）；
+改 AI_STREAM_READ_TIMEOUT → 流式「多久没新字节」就断（不是整段对话总时长）。
 """
 
 from __future__ import annotations
@@ -33,3 +34,7 @@ AI_CONNECT_TIMEOUT = float(os.getenv("AI_CONNECT_TIMEOUT", "2.0"))
 AI_READ_TIMEOUT = float(os.getenv("AI_READ_TIMEOUT", "3.0"))
 # 可调：health 最大尝试次数（含首次）；仅幂等 GET
 AI_HEALTH_MAX_RETRIES = int(os.getenv("AI_HEALTH_MAX_RETRIES", "2"))
+
+# ---- 10.03 SSE ----
+# 可调：流式读空闲超时（秒）；总对话可很长，但「多久没新字节」要封顶
+AI_STREAM_READ_TIMEOUT = float(os.getenv("AI_STREAM_READ_TIMEOUT", "120.0"))
