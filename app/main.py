@@ -1,14 +1,15 @@
 # app/main.py
-"""课次 10.01 · ai-bff 最小入口。
+"""课次 10.01～10.02 · ai-bff 入口。
 
-本课只暴露 BFF 自身探活，证明网关进程能起来。
-转发 ai-service /health、聊天、SSE → 留给 10.02 / 10.03。
+10.01：BFF 自身可启动。
+10.02：/health 聚合探测下游 ai-service（超时/降级，不抛裸堆栈）。
 """
 
 from __future__ import annotations
 
 from fastapi import FastAPI
 
+from app.clients.ai_http import check_ai_health
 from app.config import AI_SERVICE_BASE_URL, APP_NAME, BFF_PORT
 
 app = FastAPI(title=APP_NAME, description="BFF：鉴权与转发，不做 RAG/Agent")
@@ -16,13 +17,22 @@ app = FastAPI(title=APP_NAME, description="BFF：鉴权与转发，不做 RAG/Ag
 
 @app.get("/health")
 def health() -> dict[str, object]:
-    """BFF 自身探活（还不探测下游；10.02 再聚合 ai-service）。"""
+    """BFF 探活：自身 ok + 下游 ai 汇总。
+
+    下游挂了也不返回 500 空白，而是 ai=down/timeout + 稳定 code。
+    """
+    ai = check_ai_health()
+    # BFF 进程活着 → status 仍 ok；用 ai 字段表达下游
+    overall = "ok" if ai.get("ai") == "up" else "degraded"
     return {
-        "status": "ok",
+        "status": overall,
         "app": APP_NAME,
         "role": "bff",
         "downstream": AI_SERVICE_BASE_URL,
-        "note": "下游探活见 10.02",
+        "ai": ai.get("ai"),
+        "code": ai.get("code"),
+        "detail": ai.get("detail"),
+        "error": ai.get("error"),
     }
 
 

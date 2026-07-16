@@ -42,8 +42,10 @@ git push -u github master
 
 | 配置 | 含义 | 默认示例 |
 |------|------|----------|
-| `AI_SERVICE_BASE_URL` | 下游 AI 引擎根地址 | `http://127.0.0.1:8000` |
+| `AI_SERVICE_BASE_URL` | 下游 AI 引擎根地址 | `http://127.0.0.1:8001` |
 | `BFF_PORT` | BFF 监听端口 | `8088` |
+| `AI_CONNECT_TIMEOUT` / `AI_READ_TIMEOUT` | 下游连接/读超时（秒） | `2.0` / `3.0` |
+| `AI_HEALTH_MAX_RETRIES` | health 最大尝试次数（幂等） | `2` |
 
 本地配置：复制 `.env.example` 为 `.env`（`.env` 已进 `.gitignore`，勿提交密钥）。
 
@@ -54,11 +56,16 @@ git push -u github master
 
 二者不互相替代。
 
-## 本课（10.01）验收
+## 本课验收
 
 ```bash
 cd ai-bff
+# 10.01 边界与骨架
 python scripts/10_01_bff_pattern_demo.py
+# 10.02 下游 HTTP 探活（通/不通/超时）
+python scripts/10_02_http_client_demo.py
 ```
 
-下一课（10.02）再实现：BFF 用 HTTP 客户端调通 `ai-service` `/health`。
+可选联调：先起 `ai-service`（端口 8001），再 `uvicorn app.main:app --port 8088`，访问 `/health` 看 `ai=up`。
+
+下一课（10.03）：SSE 流式转发。
